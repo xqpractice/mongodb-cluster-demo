@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  mongo-router:
+    image: mongo:4
+    depends_on:
+      - mongo-config
+    ports:
+      - "27017:27017"
+    command: mongos --configdb mongoconf/mongo-config:27017 --port 27017
+
+  mongo-config:
+    image: mongo:4
+    volumes:
+      - ./data/config/data:/data/db
+    ports:
+      - "27117:27017"
+    command: mongod --configsvr --replSet mongoconf --dbpath /data/db --port 27017
+
+  mongo-shard1-node1:
+    image: mongo:4
+    volumes:
+      - ./data/shard1/node1/data:/data/db
+    ports:
+      - "27217:27017"
+    command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
+
+  mongo-shard1-node2:
+    image: mongo:4
+    volumes:
+      - ./data/shard1/node2/data:/data/db
+    ports:
+      - "27227:27017"
+    command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
+
+  mongo-shard1-node3:
+    image: mongo:4
+    volumes:
+      - ./data/shard1/node3/data:/data/db
+    ports:
+      - "27237:27017"
+    command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
+
+networks:
+  default:
+    external:
+      name: local-network

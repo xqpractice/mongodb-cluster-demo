@@ -1,45 +1,135 @@
 version: '3'
 
 services:
-  mongo-router:
+  mongo-express1:
+    image: mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-router1
+      ME_CONFIG_MONGODB_ADMINUSERNAME:
+      ME_CONFIG_MONGODB_ADMINPASSWORD:
+
+  mongo-express2:
+    image: mongo-express
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-router2
+      ME_CONFIG_MONGODB_ADMINUSERNAME:
+      ME_CONFIG_MONGODB_ADMINPASSWORD:
+
+  mongo-router1:
     image: mongo:4
+    container_name: mongo-router1
     depends_on:
-      - mongo-config
+      - mongo-config1
+      - mongo-config2
     ports:
       - "27017:27017"
-    command: mongos --configdb mongoconf/mongo-config:27017 --port 27017
+    expose:
+      - "27017"
+    command: mongos --configdb mongoconf/mongo-config1:27017,mongo-config2:27017 --port 27017 --bind_ip_all
 
-  mongo-config:
+  mongo-router2:
     image: mongo:4
+    container_name: mongo-router2
+    depends_on:
+      - mongo-config1
+      - mongo-config2
+    ports:
+      - "27027:27017"
+    expose:
+      - "27017"
+    command: mongos --configdb mongoconf/mongo-config1:27017,mongo-config2:27017 --port 27017 --bind_ip_all
+
+  mongo-config1:
+    image: mongo:4
+    container_name: mongo-config1
     volumes:
-      - ./data/config/data:/data/db
+      - ./data/config1/data:/data/db
     ports:
       - "27117:27017"
+    expose:
+      - "27017"
+    command: mongod --configsvr --replSet mongoconf --dbpath /data/db --port 27017
+
+  mongo-config2:
+    image: mongo:4
+    container_name: mongo-config2
+    volumes:
+      - ./data/config2/data:/data/db
+    ports:
+      - "27127:27017"
+    expose:
+      - "27017"
     command: mongod --configsvr --replSet mongoconf --dbpath /data/db --port 27017
 
   mongo-shard1-node1:
     image: mongo:4
+    container_name: mongo-shard1-node1
     volumes:
       - ./data/shard1/node1/data:/data/db
     ports:
       - "27217:27017"
+    expose:
+      - "27017"
     command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
 
   mongo-shard1-node2:
     image: mongo:4
+    container_name: mongo-shard1-node2
     volumes:
       - ./data/shard1/node2/data:/data/db
     ports:
       - "27227:27017"
+    expose:
+      - "27017"
     command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
 
   mongo-shard1-node3:
     image: mongo:4
+    container_name: mongo-shard1-node3
     volumes:
       - ./data/shard1/node3/data:/data/db
     ports:
       - "27237:27017"
+    expose:
+      - "27017"
     command: mongod --shardsvr --replSet shard1 --dbpath /data/db --port 27017
+
+  mongo-shard2-node1:
+    image: mongo:4
+    container_name: mongo-shard2-node1
+    volumes:
+      - ./data/shard2/node1/data:/data/db
+    ports:
+      - "27317:27017"
+    expose:
+      - "27017"
+    command: mongod --shardsvr --replSet shard2 --dbpath /data/db --port 27017
+
+  mongo-shard2-node2:
+    image: mongo:4
+    container_name: mongo-shard2-node2
+    volumes:
+      - ./data/shard2/node2/data:/data/db
+    ports:
+      - "27327:27017"
+    expose:
+      - "27017"
+    command: mongod --shardsvr --replSet shard2 --dbpath /data/db --port 27017
+
+  mongo-shard2-node3:
+    image: mongo:4
+    container_name: mongo-shard2-node3
+    volumes:
+      - ./data/shard2/node3/data:/data/db
+    ports:
+      - "27337:27017"
+    expose:
+      - "27017"
+    command: mongod --shardsvr --replSet shard2 --dbpath /data/db --port 27017
 
 networks:
   default:
